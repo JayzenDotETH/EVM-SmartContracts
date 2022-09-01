@@ -71,6 +71,9 @@ contract SimpleDonationContract is Ownable {
             dustCheck = 0;
         }
 
+        creatorBalance = creatorBalance.sub(creatorAmount);
+        donationBalance = donationBalance.sub(donationAmount);
+
         emit Claimed(creatorAmount, donationAmount);
     }
 
