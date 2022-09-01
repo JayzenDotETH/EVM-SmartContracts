@@ -30,7 +30,7 @@ contract SimpleDonationContract is Ownable {
     event Received(address, uint);
     event Claimed(uint, uint);
     event PayoutInfoUnlocked();
-    event PayoutInfoChanged(address, address, uint);
+    event PayoutInfoChanged(address, address, string);
 
     receive() external payable {
         split(msg.value);
@@ -75,9 +75,6 @@ contract SimpleDonationContract is Ownable {
     }
 
     function setPayoutInfo(address _creatorWallet, address _donationWallet, string memory _donatingTo) external onlyOwner{
-        require(_creatorPercentage < 1, 'Must be between 1 and 100');
-        require(_creatorPercentage > 100, 'Must be between 1 and 100');
-
         creatorWallet = _creatorWallet;
         donationWallet = _donationWallet;
         donatingTo = _donatingTo;
