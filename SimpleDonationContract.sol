@@ -2,16 +2,16 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+
 
 // Simple Royalty Profit Sharing Contract
 contract SimpleDonationContract is Ownable {
-    using SafeMath for uint256;
     
     address creatorWallet;
     address donationWallet;
     
     string donatingTo;
+    string donationInfoUrl;
 
     uint256 creatorPercentage = 50;
 
@@ -21,16 +21,14 @@ contract SimpleDonationContract is Ownable {
     uint256 dustCheck = 0;
     uint256 dustCollectedAt = 50;
 
-    constructor(address _creatorWallet, address _donationWallet){
-        creatorWallet = _creatorWallet;
-        donationWallet = _donationWallet;
+    constructor(){
         
     }
 
     event Received(address, uint);
-    event Claimed(uint, uint);
+    event Claimed(address, uint, address, uint);
     event PayoutInfoUnlocked();
-    event PayoutInfoChanged(address, address, string);
+    event PayoutInfoChanged(address, address, string, string);
 
     receive() external payable {
         split(msg.value);
@@ -41,17 +39,17 @@ contract SimpleDonationContract is Ownable {
     }
 
     function split(uint256 _amount) private {
-        uint256 forCreator = _amount.mul(creatorPercentage).div(100);
-        uint256 forDonation = _amount.sub(forCreator);
+        uint256 forCreator = (_amount * creatorPercentage) / 100;
+        uint256 forDonation = _amount - forCreator;
         creatorBalance = forCreator;
         donationBalance = forDonation;
-        dustCheck = dustCheck.add(1);
+        dustCheck = dustCheck + 1;
 
         emit Received(msg.sender, msg.value);
 
     }
 
-    function claim() external onlyOwner{
+    function claim() external{
         uint256 creatorAmount = creatorBalance;
         require(creatorAmount > 0, 'Nothing To Claim');
         (bool creatorSent, bytes memory creatorData) = creatorWallet.call{value: creatorAmount}("");
@@ -62,6 +60,9 @@ contract SimpleDonationContract is Ownable {
         (bool donationSent, bytes memory donationData) = donationWallet.call{value: donationAmount}("");
         require(donationSent, "Failed to send Ether");
 
+        creatorBalance = creatorBalance - creatorAmount;
+        donationBalance = donationBalance - donationAmount;
+
         // Prep Dust to be claimed on next claim call
         if (dustCheck > dustCollectedAt){
             uint256 contractBalance = address(this).balance;
@@ -71,24 +72,28 @@ contract SimpleDonationContract is Ownable {
             dustCheck = 0;
         }
 
-        creatorBalance = creatorBalance.sub(creatorAmount);
-        donationBalance = donationBalance.sub(donationAmount);
-
-        emit Claimed(creatorAmount, donationAmount);
+        emit Claimed(creatorWallet, creatorAmount, donationWallet, donationAmount);
     }
 
-    function setPayoutInfo(address _creatorWallet, address _donationWallet, string memory _donatingTo) external onlyOwner{
+    function setPayoutInfo(address _creatorWallet, address _donationWallet, string memory _donatingTo, string memory _donationInfoUrl) external onlyOwner{
         creatorWallet = _creatorWallet;
         donationWallet = _donationWallet;
         donatingTo = _donatingTo;
+        donationInfoUrl = _donationInfoUrl;
 
-        emit PayoutInfoChanged(_creatorWallet, _donationWallet, _donatingTo);
+        emit PayoutInfoChanged(_creatorWallet, _donationWallet, _donatingTo, _donationInfoUrl);
 
     }
 
-    function checkBalances() external view onlyOwner returns (uint256, uint256){  
+    function checkBalances() external view returns (uint256, uint256){  
         return(creatorBalance, donationBalance);
 
     }
+
+    function getInfo() external view returns (address, address, string memory, string memory){  
+        return(creatorWallet, donationWallet, donatingTo, donationInfoUrl);
+
+    }
+
 
 }
