@@ -16,6 +16,8 @@ To donate to a cause on TheGivingBlock.com, you need to first go through the ste
 3. Click continue
 4. Select donate anon if you want, or fill out the info to recieve a reciept
 5. Click continue
+
 5a. If you want to recieve a reciept for write-off purposes, you need to fill out the form in step 4, set a small amount to manually transfer to activate it in step 2, then manually transfer that amount to link this address to your personal info
+
 6. Copy address given
 7. Call setPayoutInfo(yourPublicWalletAddress, addressGiven, shortDescOfCharity(as a way to check where this contract donates to for personal reference))
